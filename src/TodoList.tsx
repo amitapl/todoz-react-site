@@ -1,8 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, SetStateAction } from "react";
 import { Link } from "react-router-dom";
 import { ITodoItem } from "./TodoItem";
 import TodoItems from "./TodoItems";
 import { ITodoStore, LocalTodoStore } from "./TodoStore";
+// @ts-ignore
+import { Input, Icon, Div, Row, Col, Container } from "atomize";
 
 export interface ITodoList {
   todoItems: ITodoItem[];
@@ -39,6 +41,25 @@ const TodoList = (props: Props) => {
     todoItems: [],
   });
 
+  const [addTodoItemText, setAddTodoItemText] = useState<string>("");
+
+  const addTodoItem = () => {
+    if (!addTodoItemText) return;
+
+    onTodoListUpdate((listToUpdate: ITodoList) => {
+      listToUpdate.todoItems = [
+        {
+          text: addTodoItemText,
+          done: false,
+          id: makeKey(),
+        },
+        ...todoList.todoItems,
+      ];
+    });
+
+    setAddTodoItemText("");
+  };
+
   useEffect(() => {
     const updateTodoList = async () => {
       const list = await store.fetchTodoList(props.id);
@@ -63,71 +84,67 @@ const TodoList = (props: Props) => {
   };
 
   return (
-    <div className="todoList">
-      <div className="fixedPart">
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            const formData = new FormData(e.currentTarget);
-            const listName = formData.get("listName")?.toString().trim();
-            if (!listName) return;
+    <Container>
+      <div className="todoList">
+        <div className="fixedPart">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              const formData = new FormData(e.currentTarget);
+              const listName = formData.get("listName")?.toString().trim();
+              if (!listName) return;
 
+              onTodoListUpdate((listToUpdate: ITodoList) => {
+                listToUpdate.name = listName;
+              });
+            }}
+          >
+            <div>
+              <label htmlFor="name">List </label>
+              <Input
+                name="listName"
+                placeholder="Type list name..."
+                defaultValue={todoList?.name}
+                w="200px"
+              />
+            </div>
+          </form>
+
+          <Row p="10px">
+            <Col size="1">
+              <Div></Div>
+            </Col>
+            <Col size="10">
+              <Div>
+                <Input
+                  name="newTodo"
+                  placeholder="Type a new todo item..."
+                  defaultValue={addTodoItemText}
+                  onChange={(e: any) => setAddTodoItemText(e.target.value)}
+                />
+              </Div>
+            </Col>
+            <Col size="1" d="flex" align="center">
+              <Icon
+                name="Add"
+                size="30px"
+                cursor="pointer"
+                onClick={addTodoItem}
+              />
+            </Col>
+          </Row>
+        </div>
+
+        <TodoItems
+          todoItems={todoList?.todoItems}
+          onChange={(items: ITodoItem[]) =>
             onTodoListUpdate((listToUpdate: ITodoList) => {
-              listToUpdate.name = listName;
-            });
-          }}
-        >
-          <div>
-            <label htmlFor="name">List </label>
-            <input
-              name="listName"
-              type="text"
-              defaultValue={todoList?.name}
-              className="todoListName"
-              placeholder="Enter list name..."
-            />
-          </div>
-        </form>
-
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            const formData = new FormData(e.currentTarget);
-            const text = formData.get("newTodo")?.toString().trim();
-            if (!text) return;
-
-            onTodoListUpdate((listToUpdate: ITodoList) => {
-              listToUpdate.todoItems = [
-                {
-                  text: text,
-                  done: false,
-                  id: makeKey(),
-                },
-                ...todoList.todoItems,
-              ];
-            });
-          }}
-        >
-          <div>
-            <textarea
-              name="newTodo"
-              className="todoItem"
-              placeholder="Enter new item..."
-            />
-            <button type="submit">+</button>
-          </div>
-        </form>
+              listToUpdate.todoItems = items;
+            })
+          }
+        />
       </div>
-
-      <TodoItems
-        todoItems={todoList?.todoItems}
-        onChange={(items: ITodoItem[]) =>
-          onTodoListUpdate((listToUpdate: ITodoList) => {
-            listToUpdate.todoItems = items;
-          })
-        }
-      />
-    </div>
+    </Container>
   );
 };
 

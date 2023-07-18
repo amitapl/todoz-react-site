@@ -1,4 +1,6 @@
 import { useState } from "react";
+// @ts-ignore
+import { Checkbox, Label, Input, Row, Col, Icon, Div } from "atomize";
 
 export interface ITodoItem {
   text: string;
@@ -59,38 +61,50 @@ const TodoItem = (props: Props) => {
       onMouseOut={handleMouseOut}
       onDragOver={onDragOver}
     >
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-        }}
+      <Row
+        m="10px"
+        p="10px"
+        bg="info200"
+        border="1px solid"
+        borderColor="info800"
       >
-        <span>
-          <span className="itemCheckBox">
-            <input
-              type="checkbox"
-              checked={checked}
-              onChange={handleCheckedChange}
-            />
-          </span>
-          <span className="info">
-            <textarea
-              value={textInput}
-              onChange={handleTextChange}
-              className="todoItemText"
-            />
-          </span>
+        <Col size="1" d="flex" align="center">
           {isHovering && (
-            <span
+            <Div
+              d="flex"
+              align="center"
               className="drag"
               draggable
               onDragStart={onDragStart}
               onDragEnd={props.onDragEnd}
             >
-              <img src="./elipsis.svg" className="burger" alt="burger icon" />
-            </span>
+              <Icon name="OptionsVertical" size="30px" />
+            </Div>
           )}
-        </span>
-      </form>
+        </Col>
+        <Col size="10">
+          <Input
+            defaultValue={textInput}
+            bg="info200"
+            border="1px solid"
+            borderColor="info300"
+            rounded="0"
+            onChange={handleTextChange}
+            w="100%"
+          />
+        </Col>
+        <Col size="1" d="flex" align="center" textAlign="right">
+          <Label>
+            <Checkbox
+              onChange={handleCheckedChange}
+              checked={checked}
+              inactiveColor="success400"
+              activeColor="success700"
+              size="24px"
+            />
+          </Label>
+        </Col>
+      </Row>
     </div>
   );
 };
