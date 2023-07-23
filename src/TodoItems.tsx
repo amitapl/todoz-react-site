@@ -27,7 +27,7 @@ const TodoItems = (props: Props) => {
   };
 
   const onDragOver = (index: number) => {
-    if (!draggedIndex) {
+    if (draggedIndex === null) {
       return;
     }
 
@@ -54,6 +54,16 @@ const TodoItems = (props: Props) => {
     setDraggedItem(null);
   };
 
+  const onDelete = (itemToDelete: ITodoItem) => {
+    if (!props.todoItems) return;
+
+    let updatedTodoItems = props.todoItems.filter(
+      (item) => item !== itemToDelete
+    );
+
+    props.onChange(updatedTodoItems);
+  };
+
   return (
     <div className="todoItems">
       {props.todoItems?.map(
@@ -66,6 +76,7 @@ const TodoItems = (props: Props) => {
               onDragStart={() => onDragStart(index)}
               onDragOver={() => onDragOver(index)}
               onDragEnd={onDragEnd}
+              onDelete={onDelete}
             />
           );
         }

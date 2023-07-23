@@ -22,7 +22,10 @@ const queryClient = new QueryClient({
 const theme = {
   textSize: {
     size: {
-      customSize: "25px",
+      body: "18px",
+    },
+    height: {
+      body: "24px",
     },
   },
   grid: {

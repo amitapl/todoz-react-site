@@ -33,13 +33,22 @@ function makeKey(): string {
 
 const TodoList = (props: Props) => {
   const store: ITodoStore = new LocalTodoStore();
-  const [todoList, setTodoList] = useState<ITodoList>({
+  const [todoList, setTodoList_] = useState<ITodoList>({
     name: "",
     creationDate: new Date(),
     notes: "",
     id: props.id,
     todoItems: [],
   });
+
+  const setTodoList = (list: ITodoList) => {
+    if (list && list.todoItems) {
+      list.todoItems = list.todoItems.sort((a: ITodoItem, b: ITodoItem) =>
+        a?.done === b?.done ? 0 : a?.done ? 1 : -1
+      );
+    }
+    setTodoList_(list);
+  };
 
   const [addTodoItemText, setAddTodoItemText] = useState<string>("");
 

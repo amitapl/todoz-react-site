@@ -1,6 +1,6 @@
 import { useState } from "react";
 // @ts-ignore
-import { Checkbox, Label, Input, Row, Col, Icon, Div } from "atomize";
+import { Checkbox, Label, Input, Row, Col, Icon, Div, Text } from "atomize";
 
 export interface ITodoItem {
   text: string;
@@ -14,12 +14,14 @@ interface Props {
   onDragStart: () => void;
   onDragOver: () => void;
   onDragEnd: () => void;
+  onDelete: (item: ITodoItem) => void;
 }
 
 const TodoItem = (props: Props) => {
   const [checked, setChecked] = useState(props.item.done);
   const [textInput, setTextInput] = useState(props.item.text);
   const [isHovering, setIsHovering] = useState(false);
+  const [inputActive, setInputActive] = useState(false);
 
   const handleMouseOver = () => {
     setIsHovering(true);
@@ -27,6 +29,14 @@ const TodoItem = (props: Props) => {
 
   const handleMouseOut = () => {
     setIsHovering(false);
+  };
+
+  const handleInputMouseOver = () => {
+    setInputActive(true);
+  };
+
+  const handleInputMouseOut = () => {
+    setInputActive(false);
   };
 
   const handleCheckedChange = () => {
@@ -54,6 +64,10 @@ const TodoItem = (props: Props) => {
     e.dataTransfer.dropEffect = "move";
   };
 
+  const onDelete = () => {
+    props.onDelete(props.item);
+  };
+
   return (
     <div
       className="todoItem"
@@ -64,9 +78,10 @@ const TodoItem = (props: Props) => {
       <Row
         m="10px"
         p="10px"
-        bg="info200"
+        bg={checked ? "success300" : "info200"}
         border="1px solid"
         borderColor="info800"
+        hoverBg={checked ? "success400" : "info300"}
       >
         <Col size="1" d="flex" align="center">
           {isHovering && (
@@ -85,11 +100,18 @@ const TodoItem = (props: Props) => {
         <Col size="10">
           <Input
             defaultValue={textInput}
-            bg="info200"
-            border="1px solid"
-            borderColor="info300"
+            bg={inputActive ? "info100" : "info200"}
+            hoverBg="info100"
+            borderWidth="1px solid"
+            borderColor={inputActive ? "info900" : "info300"}
+            style={{ "text-decoration": checked ? "line-through" : "none" }}
             rounded="0"
             onChange={handleTextChange}
+            onMouseOver={handleInputMouseOver}
+            onMouseOut={handleInputMouseOut}
+            onFocus={handleInputMouseOver}
+            onFocusOut={handleInputMouseOut}
+            transition="false"
             w="100%"
           />
         </Col>
@@ -98,11 +120,19 @@ const TodoItem = (props: Props) => {
             <Checkbox
               onChange={handleCheckedChange}
               checked={checked}
-              inactiveColor="success400"
+              inactiveColor="success700"
               activeColor="success700"
               size="24px"
             />
           </Label>
+          {isHovering && (
+            <Icon
+              name="Delete"
+              cursor="pointer"
+              size="20px"
+              onClick={onDelete}
+            />
+          )}
         </Col>
       </Row>
     </div>
