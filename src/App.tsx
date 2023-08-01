@@ -23,6 +23,7 @@ const theme = {
   textSize: {
     size: {
       body: "18px",
+      header1: "30px",
     },
     height: {
       body: "24px",
@@ -45,11 +46,18 @@ const App = () => {
         <BrowserRouter>
           <QueryClientProvider client={queryClient}>
             <ThemeProvider theme={theme}>
-              <h1>
-                <Link to="/">Todoz!</Link>
-              </h1>
+              <Text
+                w="100%"
+                textAlign="center"
+                tag="h1"
+                textSize="header1"
+                textWeight="400"
+              >
+                <Link to="/">Todoz - Shared List</Link>
+              </Text>
               <Routes>
-                <Route path="/" element={<TodoList id="id" />} />
+                <Route path="/list/:id" element={<TodoList />} />
+                <Route path="/" element={<TodoList />} />
               </Routes>
             </ThemeProvider>
           </QueryClientProvider>

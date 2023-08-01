@@ -1,6 +1,7 @@
 import { useState } from "react";
 import TodoItem from "./TodoItem";
 import { ITodoItem } from "./TodoItem";
+import { Icon, Notification, Anchor } from "atomize";
 
 interface Props {
   todoItems: ITodoItem[];
@@ -10,6 +11,9 @@ interface Props {
 const TodoItems = (props: Props) => {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [draggedItem, setDraggedItem] = useState<ITodoItem | null>(null);
+  const [deleteNotification, setDeleteNotification] = useState(false);
+  const [deletedItem, setDeletedItem] = useState<ITodoItem>();
+  const [deletedItemIndex, setDeletedItemIndex] = useState<number>();
 
   const onTodoItemChange = (item: ITodoItem) => {
     if (!props.todoItems) return;
@@ -57,9 +61,30 @@ const TodoItems = (props: Props) => {
   const onDelete = (itemToDelete: ITodoItem) => {
     if (!props.todoItems) return;
 
+    let deleteIndex = props.todoItems.indexOf(itemToDelete);
     let updatedTodoItems = props.todoItems.filter(
       (item) => item !== itemToDelete
     );
+
+    props.onChange(updatedTodoItems);
+
+    setDeletedItem(itemToDelete);
+    setDeletedItemIndex(deleteIndex);
+    setDeleteNotification(true);
+  };
+
+  const revertDelete = () => {
+    if (!deletedItem) return;
+
+    let updatedTodoItems = props.todoItems.slice(0, deletedItemIndex);
+    updatedTodoItems.push(deletedItem);
+    updatedTodoItems = updatedTodoItems.concat(
+      props.todoItems.slice(deletedItemIndex)
+    );
+
+    setDeletedItem(undefined);
+    setDeletedItemIndex(undefined);
+    setDeleteNotification(false);
 
     props.onChange(updatedTodoItems);
   };
@@ -81,6 +106,21 @@ const TodoItems = (props: Props) => {
           );
         }
       )}
+      <Notification
+        bg="info100"
+        textColor="info800"
+        isOpen={deleteNotification}
+        onClick={() => setDeleteNotification(false)}
+        onClose={() => {}}
+        prefix={
+          <Icon name="Info" color="info800" size="18px" m={{ r: "0.5rem" }} />
+        }
+      >
+        Item was deleted, &nbsp;
+        <Anchor textDecor="underline" onClick={revertDelete}>
+          click to recover
+        </Anchor>
+      </Notification>
     </div>
   );
 };

@@ -1,10 +1,11 @@
-import { useState, useEffect, SetStateAction } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { ITodoItem } from "./TodoItem";
 import TodoItems from "./TodoItems";
-import { ITodoStore, LocalTodoStore } from "./TodoStore";
+import { ITodoStore, CloudTodoStore } from "./TodoStore";
+import { IIdStore, LocalIdStore } from "./IdStore";
 // @ts-ignore
-import { Input, Icon, Div, Row, Col, Container } from "atomize";
+import { Input, Icon, Div, Row, Col, Container, Text } from "atomize";
 
 export interface ITodoList {
   todoItems: ITodoItem[];
@@ -14,30 +15,58 @@ export interface ITodoList {
   id: string;
 }
 
-interface Props {
-  id: string;
-}
-
 function makeKey(): string {
   let result = "";
   const characters =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   const charactersLength = characters.length;
   let counter = 0;
-  while (counter < 6) {
+  while (counter < 8) {
     result += characters.charAt(Math.floor(Math.random() * charactersLength));
     counter += 1;
   }
   return result;
 }
 
-const TodoList = (props: Props) => {
-  const store: ITodoStore = new LocalTodoStore();
+const TodoList = () => {
+  let { id } = useParams();
+
+  const storeRef: React.MutableRefObject<ITodoStore> = useRef(
+    new CloudTodoStore()
+  );
+
+  const idStoreRef: React.MutableRefObject<IIdStore> = useRef(
+    new LocalIdStore()
+  );
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!id) {
+      id = idStoreRef.current.getCurrentId();
+      if (!id) {
+        id = makeKey();
+      }
+      navigate("/list/" + id, { replace: true });
+    }
+
+    idStoreRef.current.setCurrentId(id);
+
+    const updateTodoList = async () => {
+      const list = await storeRef.current.fetchTodoList(id ?? "");
+      if (list) {
+        setTodoList(list);
+      }
+    };
+
+    updateTodoList();
+  }, []);
+
   const [todoList, setTodoList_] = useState<ITodoList>({
     name: "",
     creationDate: new Date(),
     notes: "",
-    id: props.id,
+    id: id || "",
     todoItems: [],
   });
 
@@ -51,6 +80,22 @@ const TodoList = (props: Props) => {
   };
 
   const [addTodoItemText, setAddTodoItemText] = useState<string>("");
+
+  const handlePasteItems = (e: any) => {
+    const content: string = e?.clipboardData.getData("text");
+    if (!content) return;
+
+    const list = content
+      .split("\n")
+      .map((item: string) => item?.trim())
+      .filter((item: string) => item);
+
+    if (list.length <= 1) return;
+
+    addTodoItems(list);
+
+    e.preventDefault();
+  };
 
   const addTodoItem = () => {
     if (!addTodoItemText) return;
@@ -69,18 +114,25 @@ const TodoList = (props: Props) => {
     setAddTodoItemText("");
   };
 
-  useEffect(() => {
-    const updateTodoList = async () => {
-      const list = await store.fetchTodoList(props.id);
-      if (list) {
-        setTodoList(list);
-      }
-    };
+  const addTodoItems = (items: string[]) => {
+    if (!items || items.length === 0) return;
 
-    updateTodoList();
-  }, []);
+    const todoItems: ITodoItem[] = items.map((item: string) => {
+      return {
+        text: item,
+        done: false,
+        id: makeKey(),
+      };
+    });
 
-  let onTodoListUpdate = (
+    onTodoListUpdate((listToUpdate: ITodoList) => {
+      listToUpdate.todoItems = [...todoItems, ...todoList.todoItems];
+    });
+
+    setAddTodoItemText("");
+  };
+
+  const onTodoListUpdate = (
     todoListUpdater: (listToUpdate: ITodoList) => void
   ) => {
     const updatedTodoList: ITodoList = {
@@ -88,48 +140,58 @@ const TodoList = (props: Props) => {
     };
 
     todoListUpdater(updatedTodoList);
-    store.updateTodoList(updatedTodoList);
+    storeRef.current.updateTodoList(updatedTodoList);
     setTodoList(updatedTodoList);
   };
+
+  const onTodoListNameUpdate = (listName: string) => {
+    if (!listName) return;
+
+    onTodoListUpdate((listToUpdate: ITodoList) => {
+      listToUpdate.name = listName;
+    });
+  };
+
+  function onKeyDown(e: any): void {
+    if (e.key === "Enter") {
+      addTodoItem();
+    }
+  }
 
   return (
     <Container>
       <div className="todoList">
         <div className="fixedPart">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              const formData = new FormData(e.currentTarget);
-              const listName = formData.get("listName")?.toString().trim();
-              if (!listName) return;
-
-              onTodoListUpdate((listToUpdate: ITodoList) => {
-                listToUpdate.name = listName;
-              });
-            }}
-          >
-            <div>
-              <label htmlFor="name">List </label>
+          <Row m="10px" p="10px">
+            <Col>
               <Input
                 name="listName"
                 placeholder="Type list name..."
                 defaultValue={todoList?.name}
-                w="200px"
+                onChange={(e: any) => onTodoListNameUpdate(e.target.value)}
+                style={{ border: "solid", borderWidth: "0 0 2px 0" }}
+                bg="gray200"
+                hoverBg="gray400"
+                rounded="0"
+                borderColor="info900"
+                w="100%"
+                textSize="title"
               />
-            </div>
-          </form>
-
-          <Row p="10px">
-            <Col size="1">
-              <Div></Div>
             </Col>
+          </Row>
+
+          <Row m="10px" p="10px">
+            <Col size="1"></Col>
             <Col size="10">
               <Div>
                 <Input
                   name="newTodo"
-                  placeholder="Type a new todo item..."
+                  placeholder="Type a new item or paste a list of items..."
                   defaultValue={addTodoItemText}
                   onChange={(e: any) => setAddTodoItemText(e.target.value)}
+                  onPaste={(e: any) => handlePasteItems(e)}
+                  onKeyDown={onKeyDown}
+                  w="100%"
                 />
               </Div>
             </Col>
@@ -138,7 +200,7 @@ const TodoList = (props: Props) => {
                 name="Add"
                 size="30px"
                 cursor="pointer"
-                onClick={addTodoItem}
+                onClick={() => addTodoItem()}
               />
             </Col>
           </Row>

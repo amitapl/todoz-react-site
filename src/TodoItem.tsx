@@ -102,15 +102,14 @@ const TodoItem = (props: Props) => {
             defaultValue={textInput}
             bg={inputActive ? "info100" : "info200"}
             hoverBg="info100"
-            borderWidth="1px solid"
             borderColor={inputActive ? "info900" : "info300"}
-            style={{ "text-decoration": checked ? "line-through" : "none" }}
+            style={{ textDecoration: checked ? "line-through" : "none" }}
             rounded="0"
             onChange={handleTextChange}
             onMouseOver={handleInputMouseOver}
             onMouseOut={handleInputMouseOut}
             onFocus={handleInputMouseOver}
-            onFocusOut={handleInputMouseOut}
+            onBlur={handleInputMouseOut}
             transition="false"
             w="100%"
           />
